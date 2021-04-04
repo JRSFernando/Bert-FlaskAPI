@@ -1,30 +1,40 @@
-import tensorflow as tf
-from flask import Flask
-from transformers import BertTokenizer, TFBertForSequenceClassification
+import json
+
+import flask
+from flask import Flask, request
+from flask_cors import CORS
+
+from bert_initializer import classify_tweets
 from tweepy_executor import get_related_tweets
 
 app = Flask(__name__)
+CORS(app)
 
-model = TFBertForSequenceClassification.from_pretrained('./fine-tuned-Bert/')
-tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 
-@app.route('/')
+@app.route('/classifytweets')
 def classify():
-    tweets = get_related_tweets('trump')
-    tweetList = tweets['tweet_text'].to_numpy()
-    print(tweetList[0])
-    pred_sentences = [
-        tweetList[0],
-        'Gender equality lgbtq should be promoted']
-    tf_batch = tokenizer(pred_sentences, max_length=75, padding=True, truncation=True, return_tensors='tf')
-    tf_outputs = model(tf_batch)
-    tf_predictions = tf.nn.softmax(tf_outputs[0], axis=-1)
+    search_term = request.args.get('search-term')
+    tweets = get_related_tweets(search_term)
+    print(tweets)
+    tweet_list = tweets['text'].to_numpy()
+
+    pred_sentences = []
+    for i in range(len(tweet_list)):
+        pred_sentences.append(tweet_list[i])
+
     labels = ['Rep', 'Dem']
-    label = tf.argmax(tf_predictions, axis=1)
-    label = label.numpy()
+    label = classify_tweets(pred_sentences)
+    label_list = []
     for i in range(len(pred_sentences)):
         print(pred_sentences[i], ": \n", labels[label[i]])
-    return str(tweets)
+        label_list.append(labels[label[i]])
+
+    tweets['classification'] = label_list
+    result = tweets.to_json(orient="records")
+    parsed_tweets = json.loads(result)
+    parsed_tweets = flask.jsonify(parsed_tweets)
+
+    return parsed_tweets
 
 
 if __name__ == '__main__':
