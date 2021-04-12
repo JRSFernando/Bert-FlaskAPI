@@ -2,7 +2,6 @@
 import tweepy
 import time
 import pandas as pd
-
 pd.set_option('display.max_colwidth', 1000)
 
 # api key
@@ -23,7 +22,6 @@ authentication.set_access_token(access_token, access_token_secret)
 # call the api
 api = tweepy.API(authentication, wait_on_rate_limit=True)
 
-
 def get_related_tweets(text_query):
     # list to store tweets
     tweets_list = []
@@ -32,7 +30,6 @@ def get_related_tweets(text_query):
     try:
         # Pulling individual tweets from query
         for tweet in api.search(q=text_query, count=count):
-            print(tweet)
             # Adding to list that contains all tweets
             tweets_list.append(tweet._json)
         return pd.DataFrame.from_dict(tweets_list)
