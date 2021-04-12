@@ -1,5 +1,5 @@
 import json
-
+import time
 import flask
 from flask import Flask, request
 from flask_cors import CORS
@@ -15,15 +15,17 @@ CORS(app)
 def classify():
     search_term = request.args.get('search-term')
     tweets = get_related_tweets(search_term)
-    print(tweets)
     tweet_list = tweets['text'].to_numpy()
 
     pred_sentences = []
     for i in range(len(tweet_list)):
         pred_sentences.append(tweet_list[i])
 
-    labels = ['Rep', 'Dem']
+    labels = ['Republican', 'Democratic']
+    start = time.time()
     label = classify_tweets(pred_sentences)
+    end = time.time()
+    print(end - start)
     label_list = []
     for i in range(len(pred_sentences)):
         print(pred_sentences[i], ": \n", labels[label[i]])
