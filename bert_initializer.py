@@ -1,15 +1,18 @@
 import tensorflow as tf
-from transformers import BertTokenizer, TFBertForSequenceClassification
+from transformers import BertTokenizer, BertForSequenceClassification
 
-model = TFBertForSequenceClassification.from_pretrained('./fine-tuned-Bert/')
+model = BertForSequenceClassification.from_pretrained('./quantized-bert/')
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 
 
 def classify_tweets(pred_sentences):
-    tf_batch = tokenizer(pred_sentences, max_length=75, padding=True, truncation=True, return_tensors='tf')
-    tf_outputs = model(tf_batch)
-    tf_predictions = tf.nn.softmax(tf_outputs[0], axis=-1)
-    label = tf.argmax(tf_predictions, axis=1)
+    encoding = tokenizer(pred_sentences, return_tensors='pt', padding=True, truncation=True)
+    input_ids = encoding['input_ids']
+    attention_mask = encoding['attention_mask']
+    outputs = model(input_ids, attention_mask=attention_mask)
+    tensor = outputs.logits.detach().numpy()
+    predictions = tf.nn.softmax(tensor, axis=-1)
+    label = tf.argmax(predictions, axis=1)
     label = label.numpy()
 
     return label
