@@ -6,6 +6,7 @@ from flask_cors import CORS
 
 from bert_initializer import classify_tweets, classify_tweets_bert_base
 from tweepy_executor import get_related_tweets
+from pre_processor import process
 
 app = Flask(__name__)
 CORS(app)
@@ -69,7 +70,9 @@ def classify():
 @app.route('/evaluate')
 def evaluate():
     evaluation = dict()
+    tweets = []
     pred_sentences = evaluation_tweets
+    process(pred_sentences)
     labels = ['Republican', 'Democratic']
     start = time.time()
     label = classify_tweets(pred_sentences)
@@ -79,11 +82,13 @@ def evaluate():
     for i in range(len(pred_sentences)):
         print(pred_sentences[i], ": \n", labels[label[i]])
         label_list.append(labels[label[i]])
+        tweets.append({
+            'tweet': pred_sentences[i],
+            'classification': labels[label[i]]
+        })
 
-    evaluation['tweets'] = evaluation_tweets
-    evaluation['classification'] = label_list
-    print(type(evaluation))
-    result = evaluation.to_json(orient="records")
+    evaluation['tweets'] = tweets
+    result = json.dumps(evaluation)
     parsed_tweets = json.loads(result)
     parsed_tweets = flask.jsonify(parsed_tweets)
 
