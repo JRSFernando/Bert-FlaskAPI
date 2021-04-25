@@ -1,6 +1,7 @@
 import json
 import time
 import flask
+import os
 from flask import Flask, request
 from flask_cors import CORS
 
@@ -77,7 +78,8 @@ def evaluate():
     start = time.time()
     label = classify_tweets(pred_sentences)
     end = time.time()
-    print(end - start)
+    execution_time = end - start
+    print(execution_time)
     label_list = []
     for i in range(len(pred_sentences)):
         print(pred_sentences[i], ": \n", labels[label[i]])
@@ -88,6 +90,7 @@ def evaluate():
         })
 
     evaluation['tweets'] = tweets
+    evaluation['time'] = execution_time
     result = json.dumps(evaluation)
     parsed_tweets = json.loads(result)
     parsed_tweets = flask.jsonify(parsed_tweets)
