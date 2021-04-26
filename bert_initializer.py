@@ -1,9 +1,10 @@
 import tensorflow as tf
 import torch
+import os
 from transformers import BertTokenizer, TFBertForSequenceClassification
 
 # model = TFBertForSequenceClassification.from_pretrained('./political-sentiment-bert-base/')
-model = torch.jit.load("bert_traced_eager_quant.pt")
+model = torch.jit.load("bert_traced_pruned_quant.pt")
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 
 
@@ -29,3 +30,12 @@ def classify_tweets_bert_base(pred_sentences):
     label = label.numpy()
 
     return label
+
+
+def get_model_size():
+    if isinstance(model, torch.jit._script.RecursiveScriptModule):
+        size = os.path.getsize("bert_traced_pruned_quant.pt") / 1e6
+    else:
+        size = os.path.getsize("political-sentiment-bert-base/tf_model.h5") / 1e6
+
+    return size
