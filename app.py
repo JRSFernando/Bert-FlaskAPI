@@ -1,17 +1,18 @@
 import json
 import time
 import flask
-import os
 from flask import Flask, request
 from flask_cors import CORS
 
-from bert_initializer import classify_tweets, classify_tweets_bert_base
+from bert_initializer import classify_tweets, classify_tweets_bert_base, get_model_size
 from tweepy_executor import get_related_tweets
 from pre_processor import process
 
 app = Flask(__name__)
 CORS(app)
 
+evaluation_expected = ["Democratic", "Democratic", "Republican", "Democratic", "Democratic", "Republican",
+                       "Republican", "Democratic", "Republican", "Democratic"]
 evaluation_tweets = [
     "Cost of Taxpayers for Presidential Golf 74 Days into Presidency. Bush 41: $0 Obama:  $0 Trump: $578,640 Biden: $0",
     "Remember when Donald Trump fired up a crowd of white supremacists and conspiracy theorists to attack the US "
@@ -52,7 +53,7 @@ def classify():
 
     labels = ['Republican', 'Democratic']
     start = time.time()
-    label = classify_tweets(pred_sentences)
+    label = classify_tweets(process(pred_sentences))
     end = time.time()
     print(end - start)
     label_list = []
@@ -73,10 +74,10 @@ def evaluate():
     evaluation = dict()
     tweets = []
     pred_sentences = evaluation_tweets
-    process(pred_sentences)
+    print(process(pred_sentences))
     labels = ['Republican', 'Democratic']
     start = time.time()
-    label = classify_tweets(pred_sentences)
+    label = classify_tweets(process(pred_sentences))
     end = time.time()
     execution_time = end - start
     print(execution_time)
@@ -86,11 +87,13 @@ def evaluate():
         label_list.append(labels[label[i]])
         tweets.append({
             'tweet': pred_sentences[i],
-            'classification': labels[label[i]]
+            'classification': labels[label[i]],
+            'expected': evaluation_expected[i]
         })
 
     evaluation['tweets'] = tweets
     evaluation['time'] = execution_time
+    evaluation['size'] = get_model_size()
     result = json.dumps(evaluation)
     parsed_tweets = json.loads(result)
     parsed_tweets = flask.jsonify(parsed_tweets)
