@@ -1,5 +1,6 @@
 /political-sentiment-bert-base/
 /bert_traced_eager_quant.pt
+/bert_traced_pruned_quant.pt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
