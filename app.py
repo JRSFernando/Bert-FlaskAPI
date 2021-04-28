@@ -4,7 +4,7 @@ import flask
 from flask import Flask, request
 from flask_cors import CORS
 
-from bert_initializer import classify_tweets, classify_tweets_bert_base, get_model_size
+from bert_initializer import classify_tweets, get_model_size, switch_models
 from tweepy_executor import get_related_tweets
 from pre_processor import process
 
@@ -53,7 +53,7 @@ def classify():
 
     labels = ['Republican', 'Democratic']
     start = time.time()
-    label = classify_tweets(process(pred_sentences))
+    label, loaded_model = classify_tweets(process(pred_sentences))
     end = time.time()
     print(end - start)
     label_list = []
@@ -77,7 +77,7 @@ def evaluate():
     print(process(pred_sentences))
     labels = ['Republican', 'Democratic']
     start = time.time()
-    label = classify_tweets(process(pred_sentences))
+    label, loaded_model = classify_tweets(process(pred_sentences))
     end = time.time()
     execution_time = end - start
     print(execution_time)
@@ -88,17 +88,31 @@ def evaluate():
         tweets.append({
             'tweet': pred_sentences[i],
             'classification': labels[label[i]],
-            'expected': evaluation_expected[i]
+            'expected': evaluation_expected[i],
         })
 
     evaluation['tweets'] = tweets
     evaluation['time'] = execution_time
     evaluation['size'] = get_model_size()
+    evaluation['model'] = loaded_model
     result = json.dumps(evaluation)
     parsed_tweets = json.loads(result)
     parsed_tweets = flask.jsonify(parsed_tweets)
 
     return parsed_tweets
+
+
+@app.route('/switch')
+def switch():
+    selected_model = request.args.get('selected-model')
+    new_model, new_loaded_model = switch_models(selected_model)
+    response = dict()
+    response['model'] = new_loaded_model
+    result = json.dumps(response)
+    parsed_response = json.loads(result)
+    parsed_response = flask.jsonify(parsed_response)
+
+    return parsed_response
 
 
 if __name__ == '__main__':
